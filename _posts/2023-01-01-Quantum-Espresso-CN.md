@@ -3,7 +3,7 @@ layout: post
 title: Quantum Espresso使用筆記
 subtitle: 一個有關Quantum Espresso的簡易使用筆記，只涉及我自己感興趣的部分。你應該明白，這些內容僅供參考。
 author: Shuci Lee
-categories: jekyll
+categories: Quantum Espresso
 banner:
   video: https://vjs.zencdn.net/v/oceans.mp4
   loop: true
