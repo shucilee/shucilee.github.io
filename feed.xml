@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.3">Jekyll</generator><link href="/jekyll-theme-yat/feed.xml" rel="self" type="application/atom+xml" /><link href="/jekyll-theme-yat/" rel="alternate" type="text/html" /><updated>2024-04-30T11:43:43+00:00</updated><id>/jekyll-theme-yat/feed.xml</id><title type="html">SHUCI LEE 若谷花園</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">ORCA使用筆記</title><link href="/jekyll-theme-yat/orca/2024/04/29/ORCA-504-CN.html" rel="alternate" type="text/html" title="ORCA使用筆記" /><published>2024-04-29T00:00:00+00:00</published><updated>2024-04-29T00:00:00+00:00</updated><id>/jekyll-theme-yat/orca/2024/04/29/ORCA-504-CN</id><content type="html" xml:base="/jekyll-theme-yat/orca/2024/04/29/ORCA-504-CN.html"><![CDATA[<p>ORCA是一個免費的量子化學軟體，強烈建議你在此<a href="https://orcaforum.kofo.mpg.de/">網站</a>上註冊後下載可執行程式。有時，我也打不開這個網址。如果你是Windows用戶，我還建議你下載<a href="https://avogadro.cc/">Avogadro</a>，以更好的進行可視化。注意，請將這些軟體安裝到你可以找到的地方，否則在某個時刻，你會感無助。Linux用戶通常有較好的動手能力，此文可能對這類型用戶無用。</p>
+
+<h2 id="1分子結構的優化opt和頻率計算freq">1.分子結構的優化(opt)和頻率計算(freq)</h2>
+
+<ol>
+  <li>
+    <p>首先，你需要獲取某些分子的結構文件。我相信，你可以從<a href="https://pubchem.ncbi.nlm.nih.gov/">pubchem</a>上獲取到大多數東西。</p>
+
+    <p>1.1 在這個例子中我們嘗試在真空下優化一個<a href="https://pubchem.ncbi.nlm.nih.gov/compound/962">水分子</a>的結構，你會發現pubchem提供了一個2D的水分子sdf文件，你猜猜為什麼沒有提供3d的sdf文件呢🤔。將下載好的Structure2D_COMPOUND_CID_962.sdf拖動進入Avogadro中，如果Avogadro出現彈窗，請選擇YES（對於2D的sdf文件而言）。此時，Avogadro已經顯示出一個水分子的形象，按照如下步驟點擊：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>File -&gt; Save As -&gt; .xyz
+</code></pre></div>    </div>
+
+    <p>事實上，你可以使用Avogadro來搭建你所需要的化合物結構，但在這裡我就不具體展開了。請保存.xyz文件到一個小孩子都能看到的地方，右鍵該文件，使用文本編輯器打開，你會看到如下內容：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>3
+   
+O          0.92794       -0.03832       -0.05541
+H          0.64909       -0.56621       -0.81865
+H          1.89583       -0.06474       -0.09360
+</code></pre></div>    </div>
+
+    <p>顯然，3代表的是系統中的原子總數。後邊，是笛卡爾坐標系下的三個原子座標。這是一個非常簡潔且直觀的表達方式。下面我提供了一個用於結構優化的模版文件：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>! B3LYP D3 def2-SVP def2/J RIJCOSX noautostart miniprint nopop opt
+%maxcore  3500
+%pal nprocs  64 end
+* xyz   0   1
+   
+*
+</code></pre></div>    </div>
+
+    <p>請讓我簡單介紹一下這些東西，B3LYP是我們使用的泛函的名稱，def2-SVP是我們在該計算過程中使用的基組，D3是我們用於修正對弱相互作用的描述，opt代表的是我們將要進行結構優化計算。%maxcore定義了我們在計算時1個核心所分配的最大內存是3.5GB，%pal nprocs  64 end定義了我們將要使用64個核心進行計算，因此你的電腦至少需要有64個核心以及3.5*64=224GB的內存，如果你電腦之中內存不足，可能會出現讓人煩惱之事。事實上，在完成opt計算後，可以自動進行頻率計算，你只需要同時寫上兩個關鍵詞即可：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>! B3LYP D3 def2-SVP def2/J RIJCOSX noautostart miniprint nopop opt freq
+</code></pre></div>    </div>
+
+    <p>但是，在進行某些大體系的freq計算時，需要巨大的內存，這可能會導致錯誤。（即使你限定單個核心使用3.5GB，實際計算過程仍然可能會超過這一數值）。因此，在你沒有能力預估你的計算大約需要多少內存之前，建議你不要寫上freq關鍵詞，這可能會為你在某些雲計算中心省下一筆錢。* xyz   0   1中，xyz定義了我們的坐標系為笛卡爾坐標系，0代表的是系統的淨電荷數，1代表的是自旋多重度。顯然，水分子的淨電荷數為0。請在計算之前詳細考慮如何設置系統的淨電荷數和自旋多重度，這將極大的影響計算結果。我們將之前的.xyz文件中三個原子的笛卡爾座標複製到模板文件的兩個*號之間：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>! B3LYP D3 def2-SVP def2/J RIJCOSX noautostart miniprint nopop opt
+%maxcore  3500
+%pal nprocs  64 end
+* xyz   0   1
+O          0.92794       -0.03832       -0.05541
+H          0.64909       -0.56621       -0.81865
+H          1.89583       -0.06474       -0.09360
+*
+</code></pre></div>    </div>
+
+    <p>保存該文件為water.inp，顯然，我們要進行的是結構優化計算(opt)。將該文件上傳到計算中心後，選擇64核心256GB機型，使用該命令提交：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411/orca water.inp &gt; water.out --allow-run-as-root
+</code></pre></div>    </div>
+
+    <p>計算完成後，在water_trj.xyz文件中可觀察到優化過程中所有原子的笛卡爾座標變化，在water.xyz文件中有最後一次優化而保存下來的結構，這是我們需要的。將water.xyz文件的笛卡爾座標複製到模板中，將進行freq計算：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>! B3LYP D3 def2-SVP def2/J RIJCOSX noautostart miniprint nopop freq
+%maxcore  3500
+%pal nprocs  64 end
+* xyz   0   1
+O   0.92614371640324     -0.03687197693869     -0.05331642575360
+H   0.65515499887632     -0.56485658654145     -0.81669314383927
+H   1.89156128472044     -0.06754143651986     -0.09765043040713
+*
+</code></pre></div>    </div>
+
+    <p>注意，這裡面沒有opt，而是freq，將文件保存為water_freq.inp。使用以下命令提交作業：</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/opt/orca504/orca_5_0_4_linux_x86-64_shared_openmpi411/orca water_freq.inp &gt; water_freq.out --allow-run-as-root
+</code></pre></div>    </div>
+
+    <p>計算完成後，將water_freq.out拖入Avogadro後，可以看見有三個頻率，分別是1638.17、3787.36、3881.42。詢問一下你6歲的弟弟妹妹，他們會告訴你一個難以被察覺的事實——這三個數都大於0。通常情況下，沒有負數頻率（虛頻）代表著，在我們之前所設置的條件下分子已經優化到最低的能量結構。如果有負數頻率（虛頻），那麼你可能需要微調該結構，重新進行opt和freq計算。</p>
+  </li>
+</ol>]]></content><author><name>Shuci Lee</name></author><category term="ORCA" /><category term="ORCA" /><category term="Linux" /><category term="Vim" /><category term="wow" /><summary type="html"><![CDATA[ORCA是一個免費的量子化學軟體，強烈建議你在此網站上註冊後下載可執行程式。有時，我也打不開這個網址。如果你是Windows用戶，我還建議你下載Avogadro，以更好的進行可視化。注意，請將這些軟體安裝到你可以找到的地方，否則在某個時刻，你會感無助。Linux用戶通常有較好的動手能力，此文可能對這類型用戶無用。]]></summary></entry><entry><title type="html">Quantum Espresso使用筆記</title><link href="/jekyll-theme-yat/quantum/espresso/2023/01/01/Quantum-Espresso-CN.html" rel="alternate" type="text/html" title="Quantum Espresso使用筆記" /><published>2023-01-01T00:00:00+00:00</published><updated>2023-01-01T00:00:00+00:00</updated><id>/jekyll-theme-yat/quantum/espresso/2023/01/01/Quantum-Espresso-CN</id><content type="html" xml:base="/jekyll-theme-yat/quantum/espresso/2023/01/01/Quantum-Espresso-CN.html"><![CDATA[<p>test1</p>
+
+<h2 id="section-1">section 1</h2>
+
+<p>test2</p>
+
+<h2 id="section-2">section 2</h2>
+
+<p>test3</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Hello World!"</span><span class="p">;</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1">// prints 'Hi, Tom' to STDOUT.</span>
+</code></pre></div></div>]]></content><author><name>Shuci Lee</name></author><category term="Quantum" /><category term="Espresso" /><category term="QuantumEspresso" /><category term="Linux" /><category term="Vim" /><category term="Mkl" /><category term="gcc" /><category term="gfortran" /><category term="openmpi" /><category term="wow" /><summary type="html"><![CDATA[test1]]></summary></entry></feed>
